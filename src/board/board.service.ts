@@ -4,60 +4,67 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import _ from 'lodash';
+import { Repository } from 'typeorm';
+import { Article } from './article.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 @Injectable()
 export class BoardService {
-  private articles = [];
+  constructor(
+    @InjectRepository(Article) private articleRepository: Repository<Article>,
+  ) {}
 
-  private articlePasswords = new Map(); // {articleId - password}, {articleId - password}
-
-  getArticles() {
-    return this.articles;
+  async getArticles() {
+    return await this.articleRepository.find({
+      where: { deletedAt: null },
+      select: ['id', 'author', 'title', 'createdAt'],
+    });
   }
 
-  getArticlesById(id: number) {
-    const article = this.getArticlesById(id);
-    if (_.isNil(article)) {
-      throw new NotFoundException('Article not found. id' + id);
-    }
-
-    return this.articles.find((article) => {
-      return article.id === id;
+  async getArticlesById(id: number) {
+    return await this.articleRepository.findOne({
+      where: { id, deletedAt: null },
+      select: ['author', 'title', 'content', 'createdAt', 'updatedAt'],
     });
   }
 
   createArticles(title: string, content: string, password: number) {
-    const articleId = this.articles.length + 1;
-    this.articles.push({ id: articleId, title, content });
-    this.articlePasswords.set(articleId, password);
-    return articleId;
-  }
-
-  updateArticles(id: number, title: string, content: string, password: number) {
-    const article = this.getArticlesById(id);
-    if (_.isNil(article)) {
-      throw new NotFoundException('Article not found. id' + id);
-    }
-
-    if (this.articlePasswords.get(id) !== password) {
-      throw new UnauthorizedException('Password is not correct. id' + id);
-    }
-
-    article.title = title;
-    article.content = content;
-  }
-
-  deleteArticles(id: number, password: number) {
-    const article = this.getArticlesById(id);
-    if (_.isNil(article)) {
-      throw new NotFoundException('Article not found. id' + id);
-    }
-
-    if (this.articlePasswords.get(id) !== password) {
-      throw new UnauthorizedException('Password is not correct. id' + id);
-    }
-
-    this.articles = this.articles.filter((article) => {
-      return article.id !== id;
+    return this.articleRepository.insert({
+      author: 'test',
+      title,
+      content,
+      password: password.toString(),
     });
+  }
+
+  async updateArticles(
+    id: number,
+    title: string,
+    content: string,
+    password: number,
+  ) {
+    await this.veriftPassword(id, password);
+
+    this.articleRepository.update(id, { title, content });
+  }
+
+  async deleteArticles(id: number, password: number) {
+    await this.veriftPassword(id, password);
+
+    this.articleRepository.softDelete(id);
+  }
+
+  private async veriftPassword(id: number, password: number) {
+    const article = await this.articleRepository.findOne({
+      where: { id, deletedAt: null },
+      select: ['password'],
+    });
+
+    if (_.isNil(article)) {
+      throw new NotFoundException('Article not found. id' + id);
+    }
+
+    if (article.password !== password.toString()) {
+      throw new UnauthorizedException(`Password is not corrected, id: ${id}`);
+    }
   }
 }

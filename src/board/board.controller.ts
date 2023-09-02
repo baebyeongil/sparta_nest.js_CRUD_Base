@@ -19,33 +19,31 @@ export class BoardController {
 
   // 게시물 목록 조회 API
   @Get('/articles')
-  getArticles() {
-    return this.boardService.getArticles();
+  async getArticles() {
+    return await this.boardService.getArticles();
   }
 
   // 게시물 상세 조회 API
   @Get('/articles/:id')
-  getArticlesById(@Param('id') articleId: number) {
-    return this.boardService.getArticlesById(articleId);
+  async getArticlesById(@Param('id') articleId: number) {
+    return await this.boardService.getArticlesById(articleId);
   }
 
   // 게시물 작성 API
   @Post('/articles')
   createArticles(@Body() data: CreateArticleDto) {
-    return this.boardService.createArticles(
-      data.title,
-      data.content,
-      data.password,
-    );
+    this.boardService.createArticles(data.title, data.content, data.password);
+
+    return { message: '생성 성공' };
   }
 
   // 게시물 수정 API
   @Put('/articles/:id')
-  updateArticles(
+  async updateArticles(
     @Param('id') articleId: number,
     @Body() data: UpdateArticleDto,
   ) {
-    return this.boardService.updateArticles(
+    return await this.boardService.updateArticles(
       articleId,
       data.title,
       data.content,
@@ -55,10 +53,10 @@ export class BoardController {
 
   // 게시물 삭제 API
   @Delete('/articles/:id')
-  deleteArticles(
+  async deleteArticles(
     @Param('id') articleId: number,
     @Body() data: DeleteArticleDto,
   ) {
-    return this.boardService.deleteArticles(articleId, data.password);
+    return await this.boardService.deleteArticles(articleId, data.password);
   }
 }
