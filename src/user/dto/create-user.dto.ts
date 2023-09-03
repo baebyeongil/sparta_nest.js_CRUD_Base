@@ -1,15 +1,12 @@
 import { IsNumber, IsString } from 'class-validator';
 
-export class CreateArticleDto {
+export class CreateUserDto {
   @IsString()
-  readonly title: string;
+  readonly userId: string;
 
   @IsString()
-  readonly content: string;
+  readonly name: string;
 
   @IsNumber()
   readonly password: number;
-
-  @IsNumber()
-  readonly view: number;
 }

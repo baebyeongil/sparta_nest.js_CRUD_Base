@@ -11,6 +11,7 @@ import { BoardService } from './board.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { DeleteArticleDto } from './dto/delete-article.dto';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller('board') // routing path is /board => http://localhost:3000/board
 export class BoardController {
@@ -18,21 +19,34 @@ export class BoardController {
   constructor(private readonly boardService: BoardService) {}
 
   // 게시물 목록 조회 API
+  @SkipThrottle()
   @Get('/articles')
   async getArticles() {
     return await this.boardService.getArticles();
   }
 
   // 게시물 상세 조회 API
+  @SkipThrottle()
   @Get('/articles/:id')
   async getArticlesById(@Param('id') articleId: number) {
     return await this.boardService.getArticlesById(articleId);
   }
 
+  @Get('/hot-articles')
+  @SkipThrottle()
+  async getHotArticles() {
+    return await this.boardService.getHotArticles();
+  }
+
   // 게시물 작성 API
   @Post('/articles')
   createArticles(@Body() data: CreateArticleDto) {
-    this.boardService.createArticles(data.title, data.content, data.password);
+    this.boardService.createArticles(
+      data.title,
+      data.content,
+      data.password,
+      data.view,
+    );
 
     return { message: '생성 성공' };
   }
